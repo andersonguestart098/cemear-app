@@ -12,7 +12,7 @@ import axios from "axios";
 import io from "socket.io-client";
 import { Ionicons } from "@expo/vector-icons";
 import "react-native-gesture-handler";
-import { RootStackParamList } from "../types";
+import { RootStackParamList } from "../Types/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Para armazenar e recuperar token no RN.

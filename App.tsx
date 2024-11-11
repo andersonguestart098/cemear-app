@@ -1,95 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, View, TouchableOpacity } from 'react-native';
-import Navbar from './src/components/NavBar';
-import Feed from './src/components/Feed';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import * as Font from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { enableScreens } from 'react-native-screens';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import LoginScreen from './src/components/Login';
+import HomeScreen from './src/screens/HomeScreen';
+import { RootStackParamList } from './src/Types/navigation';
+import { pushNotificationService } from './src/services/PushNotificationService';
 
-enableScreens();
-
-// Previne que o SplashScreen esconda antes de carregar as fontes
-SplashScreen.preventAutoHideAsync();
-
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App: React.FC = () => {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  const loadFonts = async () => {
-    try {
-      await Font.loadAsync({
-        Ionicons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'), // Corrige o caminho da fonte
-      });
-      setFontsLoaded(true);
-      await SplashScreen.hideAsync(); // Esconde o SplashScreen após carregar as fontes
-    } catch (error) {
-      console.error('Erro ao carregar fontes:', error);
-    }
-  };
-
+  // Verifica a existência de um token de autenticação
   useEffect(() => {
-    loadFonts();
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        setIsAuthenticated(!!token);
+      } catch (error) {
+        console.error('Erro ao verificar o token de autenticação:', error);
+      }
+    };
+    checkToken();
   }, []);
 
-  if (!fontsLoaded) {
-    return null; // Não renderiza nada até que as fontes estejam carregadas
-  }
+  // Configura o serviço de notificações push
+  useEffect(() => {
+    pushNotificationService.configure();
+  }, []);
 
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Home"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <Stack.Screen name="Home" component={HomeScreen} />
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
-
-const HomeScreen: React.FC = () => (
-  <SafeAreaView style={styles.container}>
-    <Navbar />
-    <Feed />
-    <View style={styles.footerButtons}>
-      <TouchableOpacity style={styles.button}>
-        <Ionicons name="home-outline" size={24} color="black" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button}>
-        <Ionicons name="add-circle-outline" size={24} color="black" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button}>
-        <Ionicons name="heart-outline" size={24} color="black" />
-      </TouchableOpacity>
-    </View>
-  </SafeAreaView>
-);
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  footerButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default App;
